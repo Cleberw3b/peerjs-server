@@ -1,17 +1,3 @@
-### WebRTC call using react hooks and peerjs
+### Peerjs Server + websocket Server
 
-This repo is a conjuction of technologies
-[Next.js](https://nextjs.org/) + [React](https://reactjs.org/)  + [PeerJs](https://peerjs.com/)
-
-Controlling calls and streams using hooks
-
-live at (https://peer-client.cleberw3b.now.sh/)
-
-Clone this repo
-`git clone https://github.com/Cleberw3b/peerjs-client.git`
-
-Install packages
-`npm install`
-
-To run on development
-`npm start`
+This repo is a server that runs peerjs server for peers discovery and websocket server to broadcast peers connected
