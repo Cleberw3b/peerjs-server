@@ -10,15 +10,58 @@ var http = require('http');
 var fs = require('fs');
 const ExpressPeerServer = require('peer').ExpressPeerServer;
 var connectedPeers = [];
+var messages = [];
 
 const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: 5050 });
-wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(data) {
-    console.log(data);
+
+const getConnectedPeers = () => {
+  return JSON.stringify({
+    type: 'peers', connectedPeers
+  })
+}
+
+const getMessages = () => {
+  return JSON.stringify({
+    type: 'allMessages', allMessages: messages
+  })
+}
+
+const broadcast = (data) => {
+  wss.clients.forEach(socketClient => {
+    if (socketClient.readyState === WebSocket.OPEN) {
+      socketClient.send(data);
+    }
   });
+}
+
+wss.on('connection', function connection(ws) {
+
+  ws.on('message', function incoming(data) {
+    let income = JSON.parse(data);
+    console.log("recebeu data");
+    console.log(income);
+
+    if (income.type === 'message') {
+      messages.push(income.message);
+      broadcast(JSON.stringify(income));
+    }
+
+    if (income.type === 'allMessages') {
+      ws.send(getMessages());
+    }
+
+    if (income.type === 'peers') {
+      ws.send(getConnectedPeers());
+    }
+  });
+
   ws.on('close', () => {
+    if (wss.clients.lenght === 0) {
+      // connectedPeers = [];
+      // messages = [];
+    }
     console.log('stopping client');
   });
 });
@@ -47,24 +90,17 @@ const options = {
 const peerserver = ExpressPeerServer(server, options);
 app.use('/peerjs', peerserver);
 
-peerserver.on('connection', client => {
+
+peerserver.on('connection', async client => {
   console.log(`Client connected: ${client}`);
-  connectedPeers.push(client);
-  wss.clients.forEach(socketClient => {
-    if (socketClient.readyState === WebSocket.OPEN) {
-      socketClient.send(JSON.stringify({ connectedPeers }));
-    }
-  });
+  await connectedPeers.push(client);
+  broadcast(getConnectedPeers());
 });
 
-peerserver.on('disconnect', client => {
+peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
-  connectedPeers.splice(connectedPeers.indexOf(client), 1);
-  wss.clients.forEach(socketClient => {
-    if (socketClient.readyState === WebSocket.OPEN) {
-      socketClient.send(JSON.stringify({ connectedPeers }));
-    }
-  });
+  await connectedPeers.splice(connectedPeers.indexOf(client), 1);
+  broadcast(getConnectedPeers());
 });
 
 /**
