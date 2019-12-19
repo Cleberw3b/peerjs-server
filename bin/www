@@ -6,15 +6,54 @@
 
 var app = require('../app');
 var debug = require('debug')('peer-server:server');
-var http = require('http');
 var fs = require('fs');
 const ExpressPeerServer = require('peer').ExpressPeerServer;
+
+const credentials = {
+  key: fs.readFileSync("/etc/letsencrypt/live/live.democracy.earth/privkey.pem"),
+  cert: fs.readFileSync("/etc/letsencrypt/live/live.democracy.earth/cert.pem")
+}
+
 var connectedPeers = [];
 var messages = [];
 
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '5000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = require('https').createServer(credentials, app);
+
+const options = {
+  debug: true
+}
+
+const peerserver = ExpressPeerServer(server, options);
+app.use('/peerjs', peerserver);
+
+peerserver.on('connection', async client => {
+  console.log(`Client connected: ${client}`);
+  await connectedPeers.push(client);
+  broadcast(getConnectedPeers());
+});
+
+peerserver.on('disconnect', async client => {
+  console.log(`Client disconnected: ${client}`);
+  await connectedPeers.splice(connectedPeers.indexOf(client), 1);
+  broadcast(getConnectedPeers());
+});
+
+var serverWebSocket = require('https').createServer(credentials);
+
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 5050 });
+const wss = new WebSocket.Server({ server: serverWebSocket });
 
 const getConnectedPeers = () => {
   return JSON.stringify({
@@ -40,7 +79,6 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(data) {
     let income = JSON.parse(data);
-    console.log("recebeu data");
     console.log(income);
 
     if (income.type === 'message') {
@@ -58,50 +96,15 @@ wss.on('connection', function connection(ws) {
   });
 
   ws.on('close', () => {
-    if (wss.clients.lenght === 0) {
-      // connectedPeers = [];
-      // messages = [];
-    }
     console.log('stopping client');
   });
 });
 
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || '5000');
-app.set('port', port);
-
-/**
- * Create HTTP server.
- */
-
-var server = http.createServer(app);
-
-const options = {
-  // ssl: {
-  //   key: fs.readFileSync('/Users/cleberw3b/dev/cert/localhost.key'),
-  //   cert: fs.readFileSync('/Users/cleberw3b/dev/cert/localhost.crt')
-  // },
-  debug: true
-}
-
-const peerserver = ExpressPeerServer(server, options);
-app.use('/peerjs', peerserver);
-
-
-peerserver.on('connection', async client => {
-  console.log(`Client connected: ${client}`);
-  await connectedPeers.push(client);
-  broadcast(getConnectedPeers());
-});
-
-peerserver.on('disconnect', async client => {
-  console.log(`Client disconnected: ${client}`);
-  await connectedPeers.splice(connectedPeers.indexOf(client), 1);
-  broadcast(getConnectedPeers());
-});
+setTimeout(() => {
+  if (connectedPeers.length === 0) {
+    messages = [];
+  }
+}, 5000);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -110,6 +113,8 @@ peerserver.on('disconnect', async client => {
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
+serverWebSocket.listen(normalizePort(process.env.PORT2 || '5050'));
 
 /**
  * Normalize a port into a number, string, or false.
