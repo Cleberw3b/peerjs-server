@@ -44,7 +44,13 @@ peerserver.on('connection', async client => {
 peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
   await connectedPeers.splice(connectedPeers.indexOf(client), 1);
-  broadcast(getConnectedPeers())
+  broadcast(getConnectedPeers());
+  setTimeout(() => {
+    if (connectedPeers.length === 0) {
+      console.log("No peers Connected, cleaning messages");
+      messages.splice(0, messages.length);
+    }
+  }, 500);
 });
 
 var serverWebSocket = require('https').createServer(credentials);
@@ -110,12 +116,6 @@ wss.on('connection', function connection(ws) {
     console.log('stopping client');
   });
 });
-
-setTimeout(() => {
-  if (connectedPeers.length === 0) {
-    messages.splice(0, messages.length);
-  }
-}, 5000);
 
 /**
  * Listen on provided port, on all network interfaces.
