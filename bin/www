@@ -39,14 +39,10 @@ app.use('/peerjs', peerserver);
 
 peerserver.on('connection', async client => {
   console.log(`Client connected: ${client}`);
-  await connectedPeers.push(client);
-  broadcast(getConnectedPeers());
 });
 
 peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
-  await connectedPeers.splice(connectedPeers.indexOf(client), 1);
-  broadcast(getConnectedPeers());
 });
 
 var serverWebSocket = require('https').createServer(credentials);
@@ -77,21 +73,40 @@ const broadcast = (data) => {
 
 wss.on('connection', function connection(ws) {
 
-  ws.on('message', function incoming(data) {
+  ws.on('message', async function incoming(data) {
     let income = JSON.parse(data);
     console.log(income);
 
-    if (income.type === 'message') {
-      messages.push(income.message);
-      broadcast(JSON.stringify(income));
-    }
+    switch (income.type) {
+      case 'message':
+        messages.push(income.message);
+        broadcast(JSON.stringify(income));
+        break;
+      case 'allMessages':
+        ws.send(getMessages());
+        break;
+      case 'peers':
+        ws.send(getConnectedPeers());
+        break;
+      case 'updatePeers':
+        ws.send(getPeers());
+        break;
+      case 'connect':
+        console.log(income.message.peerId)
+        console.log(income.message)
 
-    if (income.type === 'allMessages') {
-      ws.send(getMessages());
-    }
+        await connectedPeers.push(income.message.peerId)
+        broadcast(getConnectedPeers())
+        break;
+      case 'disconnect':
+        console.log(income.message.peerId)
+        console.log(income.message)
 
-    if (income.type === 'peers') {
-      ws.send(getConnectedPeers());
+        await connectedPeers.splice(connectedPeers.indexOf(income.message.peerId), 1);
+        broadcast(getConnectedPeers())
+        break;
+      default:
+        console.log("Message from websock not indentified");
     }
   });
 
@@ -102,7 +117,7 @@ wss.on('connection', function connection(ws) {
 
 setTimeout(() => {
   if (connectedPeers.length === 0) {
-    messages = [];
+    messages.splice(0, messages.length);
   }
 }, 5000);
 
