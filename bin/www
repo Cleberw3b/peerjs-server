@@ -111,6 +111,9 @@ wss.on('connection', function connection(ws) {
         broadcast(getConnectedPeers())
         break;
       case 'disconnect':
+        await removeFromPeers();
+        broadcast(getConnectedPeers());
+        cleanMessages();
         break;
       default:
         console.log("Message from websock not indentified");
