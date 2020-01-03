@@ -17,6 +17,14 @@ const credentials = {
 var connectedPeers = [];
 var messages = [];
 
+const cleanMessages = () => {
+  setTimeout(() => {
+    if (connectedPeers.length === 0) {
+      messages.splice(0, messages.length);
+    }
+  }, 500);
+}
+
 /**
  * Get port from environment and store in Express.
  */
@@ -45,12 +53,7 @@ peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
   await connectedPeers.splice(connectedPeers.indexOf(client), 1);
   broadcast(getConnectedPeers());
-  setTimeout(() => {
-    if (connectedPeers.length === 0) {
-      console.log("No peers Connected, cleaning messages");
-      messages.splice(0, messages.length);
-    }
-  }, 500);
+  cleanMessages();
 });
 
 var serverWebSocket = require('https').createServer(credentials);
@@ -106,6 +109,7 @@ wss.on('connection', function connection(ws) {
       case 'disconnect':
         await connectedPeers.splice(connectedPeers.indexOf(income.message.peerId), 1);
         broadcast(getConnectedPeers())
+        cleanMessages();
         break;
       default:
         console.log("Message from websock not indentified");
