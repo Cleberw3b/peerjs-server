@@ -43,6 +43,8 @@ peerserver.on('connection', async client => {
 
 peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
+  await connectedPeers.splice(connectedPeers.indexOf(client), 1);
+  broadcast(getConnectedPeers())
 });
 
 var serverWebSocket = require('https').createServer(credentials);
@@ -92,16 +94,10 @@ wss.on('connection', function connection(ws) {
         ws.send(getPeers());
         break;
       case 'connect':
-        console.log(income.message.peerId)
-        console.log(income.message)
-
         await connectedPeers.push(income.message.peerId)
         broadcast(getConnectedPeers())
         break;
       case 'disconnect':
-        console.log(income.message.peerId)
-        console.log(income.message)
-
         await connectedPeers.splice(connectedPeers.indexOf(income.message.peerId), 1);
         broadcast(getConnectedPeers())
         break;
