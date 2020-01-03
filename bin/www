@@ -25,6 +25,10 @@ const cleanMessages = () => {
   }, 500);
 }
 
+const removeFromPeers = (id) => {
+  let index = connectedPeers.indexOf(id);
+  if (index > -1) connectedPeers.splice(index, 1);
+}
 /**
  * Get port from environment and store in Express.
  */
@@ -51,7 +55,7 @@ peerserver.on('connection', async client => {
 
 peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
-  await connectedPeers.splice(connectedPeers.indexOf(client), 1);
+  await removeFromPeers();
   broadcast(getConnectedPeers());
   cleanMessages();
 });
@@ -107,9 +111,6 @@ wss.on('connection', function connection(ws) {
         broadcast(getConnectedPeers())
         break;
       case 'disconnect':
-        await connectedPeers.splice(connectedPeers.indexOf(income.message.peerId), 1);
-        broadcast(getConnectedPeers())
-        cleanMessages();
         break;
       default:
         console.log("Message from websock not indentified");
