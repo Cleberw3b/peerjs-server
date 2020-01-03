@@ -55,7 +55,7 @@ peerserver.on('connection', async client => {
 
 peerserver.on('disconnect', async client => {
   console.log(`Client disconnected: ${client}`);
-  await removeFromPeers();
+  await removeFromPeers(client);
   broadcast(getConnectedPeers());
   cleanMessages();
 });
@@ -111,7 +111,7 @@ wss.on('connection', function connection(ws) {
         broadcast(getConnectedPeers())
         break;
       case 'disconnect':
-        await removeFromPeers();
+        await removeFromPeers(income.message.peerId);
         broadcast(getConnectedPeers());
         cleanMessages();
         break;
