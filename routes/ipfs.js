@@ -23,6 +23,7 @@ router.post('/add', async function (req, res, next) {
       console.log('Uploaded file ', name);
       try {
         result = await addFile(name, file.path);
+        res.send(result);
       } catch (error) {
         console.log(error)
       }
@@ -35,9 +36,7 @@ router.post('/add', async function (req, res, next) {
       throw err;
     })
     .on('end', () => {
-      res.send(result);
-      res.end();
-    })
+    });
 });
 
 module.exports = router;
