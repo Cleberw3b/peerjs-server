@@ -16,6 +16,9 @@ router.post('/add', async function (req, res, next) {
     .on('field', (name, field) => {
       console.log('Field', name, field);
     })
+    .on('fileBegin', (name, file) => {
+      file.path = __dirname + '/../uploads/' + name
+    })
     .on('file', async (name, file) => {
       console.log('Uploaded file', name, file);
       result = await addFile(file);
