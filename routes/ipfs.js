@@ -21,7 +21,7 @@ router.post('/add', async function (req, res, next) {
     })
     .on('file', async (name, file) => {
       console.log('Uploaded file', name, file);
-      result = await addFile(file);
+      result = await addFile(name, file.path);
     })
     .on('aborted', () => {
       console.error('Request aborted by the user');
