@@ -4,7 +4,7 @@ const util = require("./util.js");
 const ipfs = ipfsClient('http://localhost:5001');
 
 /**
- * Displays the BTFS node ID information.
+ * Displays the IPFS node ID information.
  * 
  * @returns {Promise}
  */
@@ -15,22 +15,17 @@ const ipfsID = () => {
 /**
  * Adds file on BTFS
  * 
- * @param {string} filename     The filename is the local path that will be added to BTFS.
+ * @param {readable-stream} stream     The stream to add
  * @returns {Promise}
  */
-const addFile = (filename) => {
-    let name = filename.substring(filename.lastIndexOf('/') + 1);
-    let filestream = fs.createReadStream(filename);
-    return ipfs.addFromStream({
-        path: name,
-        content: filestream
-    });
+const addFile = (stream) => {
+    return ipfs.addFromStream(stream);
 }
 
 /**
  * List directory contents for Unix filesystem objects.
  * 
- * @param {string}  btfsPath    The CID of the BTFS path to list object(s).
+ * @param {string}  btfsPath    The CID of the IPFS path to list object(s).
  * @returns {Array}
  */
 const listDir = (btfsPath, filename) => {
@@ -40,14 +35,14 @@ const listDir = (btfsPath, filename) => {
 }
 
 /**
- * Fetch a file or an entire directory tree from BTFS that is addressed
- * by a valid BTFS Path. The files will be yielded as Readable Streams.
+ * Fetch a file or an entire directory tree from IPFS that is addressed
+ * by a valid IPFS Path. The files will be yielded as Readable Streams.
  * 
- * @param {string}  btfsPath    BTFS path that will be downloaded.
+ * @param {string}  ipfsPath    IPFS path that will be downloaded.
  * @returns {Promise}
  */
-const getFile = (btfsPath) => {
-    const stream = ipfs.getReadableStream(btfsPath)
+const getFile = (ipfsPath) => {
+    const stream = ipfs.getReadableStream(ipfsPath)
     return new Promise((resolve, reject) => {
         stream.on('error', (err) => {
             reject(err);
