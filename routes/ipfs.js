@@ -22,7 +22,7 @@ router.post('/add', async function (req, res, next) {
     .on('file', async (name, file) => {
       console.log('Uploaded file ', name);
       try {
-        result = await addFile(name, file);
+        result = await addFile(name, file.path);
       } catch (error) {
         console.log(error)
       }

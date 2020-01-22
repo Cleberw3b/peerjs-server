@@ -16,13 +16,14 @@ const ipfsID = () => {
  * Adds file on BTFS
  * 
  * @param {string} name         The file name.
- * @param {string} file         The file blob.
+ * @param {string} filepath     The filepath is the local path that will be added to IPFS.
  * @returns {Promise}
  */
-const addFile = (name, file) => {
-    return ipfs.add({
+const addFile = (name, filepath) => {
+    let filestream = fs.createReadStream(filepath);
+    return ipfs.addFromStream({
         path: name,
-        content: file
+        content: filestream
     });
 }
 
